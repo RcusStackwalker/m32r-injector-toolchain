@@ -1,0 +1,7 @@
+# editor artifacts
+.DS_Store
+*.swp
+*~
+
+# local docker tag overrides
+.env

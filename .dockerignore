@@ -2,5 +2,6 @@
 .github/
 docs/
 README.md
+LICENSE
 Makefile
 .gitignore

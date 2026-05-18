@@ -9,7 +9,7 @@ ARG GCC_VERSION
 ARG BINUTILS_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        gcc g++ make flex bison texinfo \
+        gcc g++ make flex bison texinfo file \
         libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev \
         wget ca-certificates xz-utils bzip2 \
     && rm -rf /var/lib/apt/lists/*
@@ -50,6 +50,7 @@ RUN wget -q "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.t
         --disable-nls \
         --disable-libssp \
         --disable-libgomp \
+        --disable-libstdcxx \
     && make -j"$(nproc)" \
     && make install \
     && cd /build \

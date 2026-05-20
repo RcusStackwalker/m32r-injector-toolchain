@@ -3,7 +3,20 @@ ARG GCC_VERSION=16.1.0
 ARG BINUTILS_VERSION=2.44
 ARG CODEINJECTOR_VERSION=0.0.1
 
-# ── builder ──────────────────────────────────────────────────────────────────
+# ── codeinjector builder ──────────────────────────────────────────────────────
+# Compiles the codeinjector binary from source for the target architecture.
+# Using cargo install avoids arch-specific wheel URLs.
+FROM rust:slim-bookworm AS codeinjector-builder
+
+ARG CODEINJECTOR_VERSION
+RUN cargo install \
+        --git https://github.com/RcusStackwalker/codeinjector.git \
+        --tag "v${CODEINJECTOR_VERSION}" \
+        --locked \
+        --root /usr/local \
+        codeinjector
+
+# ── m32r toolchain builder ────────────────────────────────────────────────────
 FROM ubuntu:${UBUNTU_VERSION} AS builder
 
 ARG GCC_VERSION
@@ -57,24 +70,21 @@ RUN wget -q "https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.t
     && cd /build \
     && rm -rf "gcc-${GCC_VERSION}" "gcc-${GCC_VERSION}.tar.xz" gcc-build
 
-# ── runner ───────────────────────────────────────────────────────────────────
+# ── runner ────────────────────────────────────────────────────────────────────
 FROM ubuntu:${UBUNTU_VERSION} AS runner
 
 ARG GCC_VERSION
 ARG CODEINJECTOR_VERSION
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        make \
         cmake \
         libgmp10 libmpfr6 libmpc3 zlib1g \
-        python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/m32r-elf /opt/m32r-elf
+COPY --from=codeinjector-builder /usr/local/bin/codeinjector /usr/local/bin/codeinjector
 
 ENV PATH="/opt/m32r-elf/bin:${PATH}"
 
-# wheel package version (0.1.0) differs from the GitHub release tag (CODEINJECTOR_VERSION)
-RUN pip3 install --no-cache-dir --break-system-packages \
-    "https://github.com/RcusStackwalker/codeinjector/releases/download/v${CODEINJECTOR_VERSION}/codeinjector-0.1.0-py3-none-manylinux_2_34_x86_64.whl"
-
-LABEL org.opencontainers.image.description="m32r-elf cross-compiler GCC ${GCC_VERSION} with CMake"
+LABEL org.opencontainers.image.description="m32r-elf cross-compiler GCC ${GCC_VERSION} with codeinjector ${CODEINJECTOR_VERSION}"

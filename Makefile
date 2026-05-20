@@ -14,7 +14,6 @@ BUILD_ARGS = \
 
 build:
 	docker buildx build \
-		--platform linux/amd64 \
 		$(BUILD_ARGS) \
 		--load \
 		-t $(IMAGE):latest \
@@ -25,7 +24,7 @@ shell:
 
 push:
 	docker buildx build \
-		--platform linux/amd64 \
+		--platform linux/amd64,linux/arm64 \
 		$(BUILD_ARGS) \
 		--push \
 		-t $(IMAGE):latest \
